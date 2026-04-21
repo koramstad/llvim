@@ -55,33 +55,33 @@ function M.open()
 		vim.api.nvim_set_option_value("readonly", false, { buf = bottom_buf })
 		vim.api.nvim_set_option_value("modifiable", true, { buf = bottom_buf })
 
-		local current = vim.api.nvim_buf_get_lines(bottom_buf, 0, -1, false)
+		local current_lines = vim.api.nvim_buf_get_lines(bottom_buf, 0, -1, false)
 
-		if #current > 0 then
-			table.insert(current, "")
-			table.insert(current, "")
+		if #current_lines > 0 then
+			table.insert(current_lines, "")
+			table.insert(current_lines, "")
 		end
 
 		local prompt_lines = vim.split("> " .. prompt, "\n", { plain = true })
 		for _, line in ipairs(prompt_lines) do
-			table.insert(current, line)
+			table.insert(current_lines, line)
 		end
-		vim.api.nvim_buf_set_lines(bottom_buf, 0, -1, false, current)
+		vim.api.nvim_buf_set_lines(bottom_buf, 0, -1, false, current_lines)
 		vim.api.nvim_win_set_cursor(popup_bottom.winid, { vim.api.nvim_buf_line_count(bottom_buf), 1 })
 
 		local buffer = {}
 		local function flush_buffer()
 			if #buffer > 0 then
-				local current = vim.api.nvim_buf_get_lines(bottom_buf, 0, -1, false)
+				local flush_lines = vim.api.nvim_buf_get_lines(bottom_buf, 0, -1, false)
 				for _, line in ipairs(buffer) do
 					line = vim.trim(line)
 					if line ~= "" then
 						for _, sub in ipairs(vim.split(line, "\n", { plain = true })) do
-							table.insert(current, sub)
+							table.insert(flush_lines, sub)
 						end
 					end
 				end
-				vim.api.nvim_buf_set_lines(bottom_buf, 0, -1, false, current)
+				vim.api.nvim_buf_set_lines(bottom_buf, 0, -1, false, flush_lines)
 				vim.api.nvim_win_set_cursor(popup_bottom.winid, { vim.api.nvim_buf_line_count(bottom_buf), 1 })
 				buffer = {}
 			end
@@ -106,22 +106,22 @@ function M.open()
 
 		local function on_stderr(_, data)
 			if data then
-				local current = vim.api.nvim_buf_get_lines(bottom_buf, 0, -1, false)
+				local stderr_lines = vim.api.nvim_buf_get_lines(bottom_buf, 0, -1, false)
 				for _, line in ipairs(data) do
 					if line ~= "" then
-						table.insert(current, "[stderr] " .. line)
+						table.insert(stderr_lines, "[stderr] " .. line)
 					end
 				end
-				vim.api.nvim_buf_set_lines(bottom_buf, 0, -1, false, current)
+				vim.api.nvim_buf_set_lines(bottom_buf, 0, -1, false, stderr_lines)
 			end
 		end
 
-		local function on_exit(_, code)
+		local function on_exit(_, _)
 			vim.api.nvim_set_option_value("readonly", true, { buf = bottom_buf })
 			vim.api.nvim_set_option_value("modifiable", false, { buf = bottom_buf })
 		end
 
-		local job = vim.fn.jobstart({
+		vim.fn.jobstart({
 			"script",
 			"-q",
 			"-c",
